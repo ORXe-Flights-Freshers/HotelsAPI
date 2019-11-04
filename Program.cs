@@ -7,6 +7,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ProjectAPI.Core.Service;
 
 namespace ProjectAPI
 {
@@ -14,6 +15,7 @@ namespace ProjectAPI
     {
         public static void Main(string[] args)
         {
+            FirebaseService.Authenticate();
             CreateWebHostBuilder(args).Build().Run();
         }
 

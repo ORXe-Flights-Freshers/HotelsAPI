@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +14,6 @@ namespace ProjectAPI.Controllers
     [ApiController]
     public class ValuesController : ControllerBase
     {
-        // GET api/values
         private static readonly HttpClient client = new HttpClient();
 
         [HttpGet]
@@ -20,8 +21,7 @@ namespace ProjectAPI.Controllers
         {
             return new string[] { "value1", "value2" };
         }
-
-        // GET api/values/5
+       
         [HttpGet("{lattitude}/{longitude}")]
         public async Task<ActionResult<string>> GetAsync(string lattitude,string longitude)
         {
@@ -40,7 +40,7 @@ namespace ProjectAPI.Controllers
             request.AddHeader("oski-correlationId", "2a04a6f-593f-4de4-25fc-jkh");
             request.AddHeader("oski-clientTenantId", "demo");
             request.AddHeader("Content-Type", "application/json");
-            request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  "+lattitude+ ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": 0.5\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
+            request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  "+lattitude+ ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": 2\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
             IRestResponse response = client.Execute(request);
             Console.WriteLine(response.ToString());
             return response.Content;
