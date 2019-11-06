@@ -12,16 +12,10 @@ namespace ProjectAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class HotelsController : ControllerBase
     {
         private static readonly HttpClient client = new HttpClient();
 
-        [HttpGet]
-        public ActionResult<IEnumerable<string>> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-       
         [HttpGet("{lattitude}/{longitude}")]
         public async Task<ActionResult<string>> GetAsync(string lattitude,string longitude)
         {
@@ -42,26 +36,7 @@ namespace ProjectAPI.Controllers
             request.AddHeader("Content-Type", "application/json");
             request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  "+lattitude+ ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": 2\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
             IRestResponse response = client.Execute(request);
-            Console.WriteLine(response.ToString());
             return response.Content;
-        }
-
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
         }
     }
 }
