@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.852
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectAPI", "ProjectAPI.csproj", "{EEC88AF5-B9D7-4D92-AE23-4CC79B9D0138}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HotelAPI", "HotelAPI.csproj", "{EEC88AF5-B9D7-4D92-AE23-4CC79B9D0138}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectAPI.Core", "ProjectAPI.Core\ProjectAPI.Core.csproj", "{88D07661-3F56-4019-8AC4-F43815939CE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HotelAPI.Core", "ProjectAPI.Core\HotelAPI.Core.csproj", "{88D07661-3F56-4019-8AC4-F43815939CE0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

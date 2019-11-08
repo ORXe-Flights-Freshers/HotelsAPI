@@ -5,7 +5,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using HotelAPI.Cache;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using RestSharp;
 
 namespace ProjectAPI.Controllers
@@ -14,11 +16,19 @@ namespace ProjectAPI.Controllers
     [ApiController]
     public class HotelsController : ControllerBase
     {
+        private IDistributedCache _distributedCache;
+        public HotelsController(IDistributedCache distributedCache)
+        {
+            _distributedCache = distributedCache;
+        }
         private static readonly HttpClient client = new HttpClient();
 
         [HttpGet("{lattitude}/{longitude}")]
         public async Task<ActionResult<string>> GetAsync(string lattitude,string longitude)
         {
+            string dataFromCache = "";
+            dataFromCache = await Redis.GetObjectAsync(_distributedCache, lattitude + "," + longitude);
+            if (dataFromCache != null) return dataFromCache;
             var client = new RestClient("https://hotel-loyaltycontent.stage.cnxloyalty.com/hotel/v1.0/Content");
             var request = new RestRequest(Method.POST);
             request.AddHeader("cache-control", "no-cache");
@@ -36,7 +46,9 @@ namespace ProjectAPI.Controllers
             request.AddHeader("Content-Type", "application/json");
             request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  "+lattitude+ ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": 2\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
             IRestResponse response = client.Execute(request);
-            return response.Content;
+            await Redis.SetObjectAsync(_distributedCache, lattitude + "," + longitude, response.Content);
+            dataFromCache = response.Content;
+            return dataFromCache;
         }
     }
 }

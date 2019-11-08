@@ -10,14 +10,21 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 
-namespace ProjectAPI
+namespace HotelAPI
 {
     public class Startup
     {
-     
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+        public IConfiguration Configuration { get; } 
         public void ConfigureServices(IServiceCollection services)
         {
-            
+            services.AddDistributedRedisCache(options =>
+            {
+                options.Configuration = Configuration.GetConnectionString("Redis");
+            });
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll",

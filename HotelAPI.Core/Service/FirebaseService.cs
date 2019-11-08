@@ -8,7 +8,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-namespace ProjectAPI.Core.Service
+namespace HotelAPI.Core.Service
 {
     public static class FirebaseService
     {

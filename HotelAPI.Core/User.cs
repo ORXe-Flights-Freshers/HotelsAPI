@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ProjectAPI.Core
+namespace HotelAPI.Core
 {
     public class User
     {

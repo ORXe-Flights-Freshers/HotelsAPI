@@ -7,11 +7,11 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using ProjectAPI.Core.Service;
+using HotelAPI.Core.Service;
 
-namespace ProjectAPI
+namespace HotelAPI
 {
-    public class Program
+    public class Programs
     {
         public static void Main(string[] args)
         {
