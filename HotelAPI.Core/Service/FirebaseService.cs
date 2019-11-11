@@ -44,7 +44,7 @@ namespace HotelAPI.Core.Service
             _jsonData = JsonConvert.SerializeObject(user);
             var postData = new StringContent(_jsonData, Encoding.UTF8, "application/json");
             var url = $"{_firebaseAuthUrl}?key={_apiKey}";
-            using (var client = new HttpClient())
+            using (var client = new HttpClient())   
             {
                 ExtractIdToken(client, url, postData);
             }
@@ -70,7 +70,7 @@ namespace HotelAPI.Core.Service
             {
                 var ipAddress = GetIp();
                 if (ipAddress == null) throw new InvalidHostException();
-                var localEndPoint = GetIp() + ":{_port}";
+                var localEndPoint = GetIp() + $":{_port}";
                 dynamic updatedIp = new ExpandoObject();
                 updatedIp.ip = localEndPoint;
                 _jsonData = JsonConvert.SerializeObject(updatedIp);

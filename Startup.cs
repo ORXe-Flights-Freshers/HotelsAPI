@@ -5,11 +5,12 @@ using System.Threading.Tasks;
 using HotelAPI.HotelAPI.Core.Service;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
+using Microsoft.Extensions.Options;
 
 namespace HotelAPI
 {
@@ -27,6 +28,12 @@ namespace HotelAPI
                 options.Configuration = Configuration.GetConnectionString("Redis");
             });
             services.AddScoped<HotelService>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+        //    services.Configure<TripDatabaseSettings>(
+        //Configuration.GetSection(nameof(TripDatabaseSettings)));
+        //    services.AddSingleton<TripDatabaseSettings>();
+        //    services.AddSingleton<TripDatabaseSettings>(sp =>
+        //        sp.GetRequiredService<IOptions<TripDatabaseSettings>>().Value);
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll",
