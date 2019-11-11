@@ -6,20 +6,24 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using HotelAPI.Cache;
+using HotelAPI.Exceptions;
+using HotelAPI.HotelAPI.Core.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using RestSharp;
 
-namespace ProjectAPI.Controllers
+namespace HotelAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class HotelsController : ControllerBase
     {
         private IDistributedCache _distributedCache;
-        public HotelsController(IDistributedCache distributedCache)
+        private HotelService _hotelService;
+        public HotelsController(IDistributedCache distributedCache, HotelService hotelService)
         {
             _distributedCache = distributedCache;
+            _hotelService = hotelService;
         }
         private static readonly HttpClient client = new HttpClient();
 
@@ -29,7 +33,29 @@ namespace ProjectAPI.Controllers
             string dataFromCache = "";
             dataFromCache = await Redis.GetObjectAsync(_distributedCache, lattitude + "," + longitude);
             if (dataFromCache != null) return dataFromCache;
-            var client = new RestClient("https://hotel-loyaltycontent.stage.cnxloyalty.com/hotel/v1.0/Content");
+            var response = GetResponse(lattitude, longitude);
+            await Redis.SetObjectAsync(_distributedCache, lattitude + "," + longitude, response);
+            dataFromCache = response;
+            return dataFromCache;
+        }
+        private string GetResponse(string lattitude, string longitude)
+        {
+            string response = "";
+            RestClient restClient = null;
+            try
+            {
+                restClient = GetRestClient();
+            }
+            catch (RestClientNotFoundException)
+            {
+                response = null;
+            }
+            response = ProcessRequest(restClient, lattitude, longitude);
+            return response;
+        }
+
+        private string ProcessRequest(RestClient restClient, string lattitude, string longitude)
+        {
             var request = new RestRequest(Method.POST);
             request.AddHeader("cache-control", "no-cache");
             request.AddHeader("Connection", "keep-alive");
@@ -44,11 +70,15 @@ namespace ProjectAPI.Controllers
             request.AddHeader("oski-correlationId", "2a04a6f-593f-4de4-25fc-jkh");
             request.AddHeader("oski-clientTenantId", "demo");
             request.AddHeader("Content-Type", "application/json");
-            request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  "+lattitude+ ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": 2\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
-            IRestResponse response = client.Execute(request);
-            await Redis.SetObjectAsync(_distributedCache, lattitude + "," + longitude, response.Content);
-            dataFromCache = response.Content;
-            return dataFromCache;
+            request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  " + lattitude + ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": 2\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
+            var response = restClient.Execute(request);
+            return response.Content;
+        }
+
+        private RestClient GetRestClient()
+        {
+            var client = _hotelService.GetRestClient();
+            return (client != null) ? client : throw new RestClientNotFoundException();
         }
     }
 }

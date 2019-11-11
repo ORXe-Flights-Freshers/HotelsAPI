@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using HotelAPI.Core.Exceptions;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Diagnostics;
@@ -15,14 +16,16 @@ namespace HotelAPI.Core.Service
         private static string _apiKey = "";
         private static string _idToken = "";
         private static string _jsonData = "";
-        private static string _apiUrl;
-        private static StringContent _postData; 
+        private static string _firebaseUrl;
+        private static StringContent _postData;
+        private static int _port;
+        private static string _firebaseAuthUrl;
         public static string GetIp()
         {
-            string hostname = Dns.GetHostName();
-            IPHostEntry ipentry = Dns.GetHostEntry(hostname);
-            IPAddress[] addr = ipentry.AddressList;
-            return addr[addr.Length - 2].ToString();
+            var hostname = Dns.GetHostName();
+            var ipentry = Dns.GetHostEntry(hostname);
+            var addr = ipentry.AddressList;
+            return addr?[addr.Length - 2].ToString();
         }
         public static async void Authenticate()
         {
@@ -33,32 +36,47 @@ namespace HotelAPI.Core.Service
                 user.email = credentials["email"];
                 user.password = credentials["password"];
                 _apiKey = credentials["key"];
-                _apiUrl = credentials["apiurl"];
+                _firebaseUrl = credentials["firebaseurl"];
+                _port = credentials["port"];
+                _firebaseAuthUrl = credentials["firebaseauthurl"];
             }
             user.returnSecureToken = true;
             _jsonData = JsonConvert.SerializeObject(user);
             var postData = new StringContent(_jsonData, Encoding.UTF8, "application/json");
-            var url = $"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={_apiKey}";
+            var url = $"{_firebaseAuthUrl}?key={_apiKey}";
             using (var client = new HttpClient())
             {
-                var response = client.PostAsync(url, postData);
-                var result = response.Result.Content.ReadAsStringAsync().Result;
-                var temporaryResult = result.Split(",")[4].Split(": ")[1];
-                _idToken = temporaryResult.Substring(1, temporaryResult.Length - 2);
+                ExtractIdToken(client, url, postData);
             }
-            if (_idToken != "") await PostIp();
+            try
+            {
+                if (_idToken != "") await PostIp();
+            }
+            catch (InvalidHostException)
+            {
+                throw;
+            }
+        }
+        private static void ExtractIdToken(HttpClient client, string url, StringContent postData)
+        {
+            var response = client.PostAsync(url, postData);
+            var result = response.Result.Content.ReadAsStringAsync().Result;
+            var temporaryResult = result.Split(",")[4].Split(": ")[1];
+            _idToken = temporaryResult.Substring(1, temporaryResult.Length - 2);
         }
         public static async Task PostIp()
         {
             using (var client = new HttpClient())
             {
-                var localEndPoint = GetIp() + ":5000";
+                var ipAddress = GetIp();
+                if (ipAddress == null) throw new InvalidHostException();
+                var localEndPoint = GetIp() + ":{_port}";
                 dynamic updatedIp = new ExpandoObject();
                 updatedIp.ip = localEndPoint;
                 _jsonData = JsonConvert.SerializeObject(updatedIp);
                 _postData = new StringContent(_jsonData, Encoding.UTF8, "application/json");
-                await client.DeleteAsync($"{_apiUrl}?auth={_idToken}");
-                await client.PostAsync($"{_apiUrl}?auth={_idToken}", _postData);
+                await client.DeleteAsync($"{_firebaseUrl}?auth={_idToken}");
+                await client.PostAsync($"{_firebaseUrl}?auth={_idToken}", _postData);
             }
         }
     }

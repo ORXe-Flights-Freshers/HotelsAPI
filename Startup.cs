@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using HotelAPI.HotelAPI.Core.Service;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -25,6 +26,7 @@ namespace HotelAPI
             {
                 options.Configuration = Configuration.GetConnectionString("Redis");
             });
+            services.AddScoped<HotelService>();
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll",
