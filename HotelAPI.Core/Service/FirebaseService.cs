@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 namespace HotelAPI.Core.Service
 {
+    
     public static class FirebaseService
     {
         private static string _apiKey = "";

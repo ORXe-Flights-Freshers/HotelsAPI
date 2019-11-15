@@ -10,6 +10,7 @@ using HotelAPI.Exceptions;
 using HotelAPI.HotelAPI.Core.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using RestSharp;
 
 namespace HotelAPI.Controllers
@@ -18,43 +19,69 @@ namespace HotelAPI.Controllers
     [ApiController]
     public class HotelsController : ControllerBase
     {
+        private ILogger<HotelsController> _logger;
+
         private IDistributedCache _distributedCache;
+
         private HotelService _hotelService;
-        public HotelsController(IDistributedCache distributedCache, HotelService hotelService)
+
+        public HotelsController(HotelService hotelService, IDistributedCache distributedCache
+                                ,ILogger<HotelsController> logger)
         {
+             _logger = logger;
             _distributedCache = distributedCache;
             _hotelService = hotelService;
         }
+
         private static readonly HttpClient client = new HttpClient();
 
-        [HttpGet("{lattitude}/{longitude}")]
-        public async Task<ActionResult<string>> GetAsync(string lattitude,string longitude)
+        [HttpGet("{lattitude}/{longitude}/{radius}")]
+        public async Task<ActionResult<string>> Get(string lattitude,string longitude, int radius)
         {
+
             string dataFromCache = "";
-            dataFromCache = await Redis.GetObjectAsync(_distributedCache, lattitude + "," + longitude);
-            if (dataFromCache != null) return dataFromCache;
-            var response = GetResponse(lattitude, longitude);
-            await Redis.SetObjectAsync(_distributedCache, lattitude + "," + longitude, response);
+            if(_distributedCache != null)
+                dataFromCache = await Redis.GetObjectAsync(_distributedCache, lattitude + "," + longitude + "," + radius);
+            
+            if (dataFromCache != null)
+            {
+                return dataFromCache;
+            }
+            string response = "";
+            try
+            {
+                response = GetResponse(lattitude, longitude, radius);
+            }
+            catch (InvalidPlaceException ipe)
+            {
+                _logger.LogError(ipe.Message);
+            }
+            if(_distributedCache != null)
+                await Redis.SetObjectAsync(_distributedCache, lattitude + "," + longitude + "," + radius, response);
             dataFromCache = response;
             return dataFromCache;
         }
-        private string GetResponse(string lattitude, string longitude)
+        private string GetResponse(string lattitude, string longitude, int radius)
         {
             string response = "";
             RestClient restClient = null;
             try
             {
                 restClient = GetRestClient();
+                response = ProcessRequest(restClient, lattitude, longitude, radius);
             }
-            catch (RestClientNotFoundException)
+            catch (RestClientNotFoundException restClientNotFoundException)
             {
+                _logger.LogError(restClientNotFoundException.Message);
                 response = null;
             }
-            response = ProcessRequest(restClient, lattitude, longitude);
+            
+            if (response == null) throw new InvalidPlaceException($"Place with lattitude {lattitude}" +
+                                                                  $" and longitude {longitude} not found");
             return response;
         }
 
-        private string ProcessRequest(RestClient restClient, string lattitude, string longitude)
+        private string ProcessRequest(RestClient restClient, string lattitude, string longitude, int radius)
         {
             var request = new RestRequest(Method.POST);
             request.AddHeader("cache-control", "no-cache");
@@ -70,7 +97,7 @@ namespace HotelAPI.Controllers
             request.AddHeader("oski-correlationId", "2a04a6f-593f-4de4-25fc-jkh");
             request.AddHeader("oski-clientTenantId", "demo");
             request.AddHeader("Content-Type", "application/json");
-            request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  " + lattitude + ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": 2\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
+            request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  " + lattitude + ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": " + radius + "\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
             var response = restClient.Execute(request);
             return response.Content;
         }
@@ -78,7 +105,7 @@ namespace HotelAPI.Controllers
         private RestClient GetRestClient()
         {
             var client = _hotelService.GetRestClient();
-            return (client != null) ? client : throw new RestClientNotFoundException();
+            return (client != null) ? client : throw new RestClientNotFoundException("Could not create rest client");
         }
     }
 }

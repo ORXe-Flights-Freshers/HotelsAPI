@@ -22,6 +22,7 @@ namespace HotelAPI
             }
             catch (InvalidHostException)
             {
+                Console.WriteLine("Exception");
                 return;
             }
             CreateWebHostBuilder(args).Build().Run();
