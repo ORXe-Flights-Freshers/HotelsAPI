@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace HotelAPI.Controllers
+namespace HotelAPI.HotelAPI.Core.Exceptions
 {
     [Serializable]
     internal class InvalidPlaceException : Exception

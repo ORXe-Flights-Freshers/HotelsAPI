@@ -32,16 +32,11 @@ namespace HotelAPI
                 .AddEnvironmentVariables();
 
             Configuration = builder.Build();
-            var elasticUri = Configuration["ElasticConfiguration:Uri"];
+            //var elasticUri = Configuration["ElasticConfiguration:Uri"];
             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .ReadFrom.Configuration(Configuration)
-                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUri))
-                {
-                    AutoRegisterTemplate = true,
-                })
-                .CreateLogger();
-            
+                .CreateLogger();  
         }
 
         public IConfigurationRoot Configuration { get; }
@@ -59,7 +54,7 @@ namespace HotelAPI
                 sp.GetRequiredService<IOptions<AppSettings>>().Value);
             services.AddScoped<HotelService>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        
+            services.AddScoped<HotelResponse>();
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll",

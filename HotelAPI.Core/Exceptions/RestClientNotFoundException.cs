@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace HotelAPI.Exceptions
+namespace HotelAPI.HotelAPI.Core.Exceptions
 {
     [Serializable]
     public class RestClientNotFoundException : Exception

@@ -1,5 +1,6 @@
 ﻿using HotelAPI.Configuration;
 using HotelAPI.HotelAPI.Core.Exceptions;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RestSharp;
 using System;
@@ -13,10 +14,12 @@ namespace HotelAPI.HotelAPI.Core.Service
     public class HotelService
     {
         private string _fileName;
-        private string _apiUrl = ""; 
-        public HotelService(AppSettings appSettings)
+        private string _apiUrl = "";
+        private readonly ILogger<HotelService> _logger;
+        public HotelService(AppSettings appSettings, ILogger<HotelService> logger)
         {
             _fileName = appSettings.ConfigurationFileName;
+            _logger = logger;
         }
         public RestClient GetRestClient()
         {
@@ -25,13 +28,13 @@ namespace HotelAPI.HotelAPI.Core.Service
             {
                client = new RestClient(GetHotelApiUrl());
             }
-            catch (ApiUrlException)
+            catch (ApiUrlException aue)
             {
-                Console.WriteLine("");
+                _logger.LogError(aue.ToString());
             }
-            catch (FileNotFoundException)
+            catch (FileNotFoundException fne)
             {
-                Console.WriteLine("");
+                _logger.LogError(fne.ToString());
             }
             return client;
         }

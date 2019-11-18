@@ -1,8 +1,5 @@
-﻿using HotelAPI.Core.Exceptions;
+﻿using HotelAPI.HotelAPI.Core.Exceptions;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Diagnostics;
 using System.Dynamic;
 using System.IO;
 using System.Net;

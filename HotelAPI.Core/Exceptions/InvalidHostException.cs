@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace HotelAPI.Core.Exceptions
+namespace HotelAPI.HotelAPI.Core.Exceptions
 {
     [Serializable]
     public class InvalidHostException : Exception
