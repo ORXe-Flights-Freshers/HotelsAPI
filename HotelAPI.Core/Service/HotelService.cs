@@ -27,11 +27,11 @@ namespace HotelAPI.HotelAPI.Core.Service
             }
             catch (ApiUrlException)
             {
-                Console.WriteLine("");
+                
             }
             catch (FileNotFoundException)
             {
-                Console.WriteLine("");
+                
             }
             return client;
         }

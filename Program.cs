@@ -16,15 +16,15 @@ namespace HotelAPI
     {
         public static void Main(string[] args)
         {
-            try
-            {
-                FirebaseService.Authenticate();
-            }
-            catch (InvalidHostException)
-            {
-                Console.WriteLine("Exception");
-                return;
-            }
+            //try
+            //{
+            //    FirebaseService.Authenticate();
+            //}
+            //catch (InvalidHostException)
+            //{
+            //    Console.WriteLine("Exception");
+            //    return;
+            //}
             CreateWebHostBuilder(args).Build().Run();
         }
 

@@ -1,16 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net;
+﻿using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using HotelAPI.Cache;
 using HotelAPI.Exceptions;
 using HotelAPI.HotelAPI.Core.Service;
+using HotelAPI.Modal;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using RestSharp;
 
 namespace HotelAPI.Controllers
@@ -36,18 +34,20 @@ namespace HotelAPI.Controllers
         private static readonly HttpClient client = new HttpClient();
 
         [HttpGet("{lattitude}/{longitude}/{radius}")]
-        public async Task<ActionResult<string>> Get(string lattitude,string longitude, int radius)
+        public async Task<ActionResult<List<Hotel>>> Get(string lattitude,string longitude, int radius)
         {
 
             string dataFromCache = "";
-            if(_distributedCache != null)
+            if (_distributedCache != null)
                 dataFromCache = await Redis.GetObjectAsync(_distributedCache, lattitude + "," + longitude + "," + radius);
             
             if (dataFromCache != null)
             {
-                return dataFromCache;
+                var result= JsonConvert.DeserializeObject<List<Hotel>>(dataFromCache);
+                return result;
             }
-            string response = "";
+            List<Hotel> response = new List<Hotel>();
+
             try
             {
                 response = GetResponse(lattitude, longitude, radius);
@@ -57,13 +57,14 @@ namespace HotelAPI.Controllers
                 _logger.LogError(ipe.Message);
             }
             if(_distributedCache != null)
-                await Redis.SetObjectAsync(_distributedCache, lattitude + "," + longitude + "," + radius, response);
-            dataFromCache = response;
-            return dataFromCache;
+                await Redis.SetObjectAsync(_distributedCache, lattitude + "," + longitude + "," + radius, JsonConvert.SerializeObject(response));
+           // dataFromCache = response;
+            return response;
         }
-        private string GetResponse(string lattitude, string longitude, int radius)
+        private List<Hotel> GetResponse(string lattitude, string longitude, int radius)
         {
-            string response = "";
+            //string response = "";
+            List<Hotel> response = new List<Hotel>();
             RestClient restClient = null;
             try
             {
@@ -81,25 +82,13 @@ namespace HotelAPI.Controllers
             return response;
         }
 
-        private string ProcessRequest(RestClient restClient, string lattitude, string longitude, int radius)
+        private List<Hotel> ProcessRequest(RestClient restClient, string lattitude, string longitude, int radius)
         {
-            var request = new RestRequest(Method.POST);
-            request.AddHeader("cache-control", "no-cache");
-            request.AddHeader("Connection", "keep-alive");
-            request.AddHeader("Content-Length", "228");
-            request.AddHeader("Accept-Encoding", "gzip, deflate");
-            request.AddHeader("Host", "hotel-loyaltycontent.stage.cnxloyalty.com");
-            request.AddHeader("Postman-Token", "aeecd0c2-ecfd-4ba6-b4db-435e480c1d98,130e6411-3ffc-408b-a8cf-c2ea0fb57afd");
-            request.AddHeader("Cache-Control", "no-cache");
-            request.AddHeader("Accept", "*/*");
-            request.AddHeader("User-Agent", "PostmanRuntime/7.18.0");
-            request.AddHeader("oski-tenantId", "demo");
-            request.AddHeader("oski-correlationId", "2a04a6f-593f-4de4-25fc-jkh");
-            request.AddHeader("oski-clientTenantId", "demo");
-            request.AddHeader("Content-Type", "application/json");
-            request.AddParameter("undefined", "{  \n    \"georegion\": {\n    \"circle\": {\n      \"center\": {\n        \"lat\":  " + lattitude + ",\n        \"long\":  " + longitude + "\n      },\n      \"radiusKm\": " + radius + "\n    }\n  },\n  \"supplierFamilies\": [\n    \"ean\"\n  ],\n  \"contentPrefs\": [\n    \"Basic\"\n  ]\n}", ParameterType.RequestBody);
+            var request = RequestCreator.CreateRequest(restClient, lattitude, longitude, radius);
             var response = restClient.Execute(request);
-            return response.Content;
+            var result = JsonConvert.DeserializeObject<List<Hotel>>(response.Content);
+            return result;
+            //return response.Content;
         }
 
         private RestClient GetRestClient()
