@@ -1,14 +1,15 @@
 ﻿using HotelAPI.HotelAPI.Core.Exceptions;
 using Newtonsoft.Json;
+using System;
 using System.Dynamic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 namespace HotelAPI.Core.Service
 {
-    
     public static class FirebaseService
     {
         private static string _apiKey = "";
@@ -20,10 +21,35 @@ namespace HotelAPI.Core.Service
         private static string _firebaseAuthUrl;
         public static string GetIp()
         {
-            var hostname = Dns.GetHostName();
-            var ipentry = Dns.GetHostEntry(hostname);
-            var addr = ipentry.AddressList;
-            return addr?[addr.Length - 2].ToString();
+            //var hostname = Dns.GetHostName();
+            //var ipentry = Dns.GetHostEntry(hostname);
+            //var addr = ipentry.AddressList;
+            //return addr?[addr.Length - 3].ToString();
+            var networkAdapters = NetworkInterface.GetAllNetworkInterfaces();
+            string ipAddress = "";
+            bool wifiIPFound = false;
+            foreach(var networkAdapter in networkAdapters)
+            {
+                if (wifiIPFound)
+                    break;
+                if(networkAdapter.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                {
+                    var ipProperties = networkAdapter.GetIPProperties();
+                    foreach(var unicastAddress in ipProperties.UnicastAddresses)
+                    {
+                        if(!IPAddress.IsLoopback(unicastAddress.Address) &&
+                            unicastAddress.Address.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
+                        {
+                            if (networkAdapter.Name.Equals("Wi-Fi"))
+                            {
+                                ipAddress = unicastAddress.Address.ToString();
+                                wifiIPFound = true;
+                            }
+                        }
+                    }
+                }
+            }
+            return ipAddress;
         }
         public static async void Authenticate()
         {

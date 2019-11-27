@@ -16,7 +16,7 @@ namespace HotelAPI.HotelAPI.Core.Service
         private string _fileName;
         private string _apiUrl = "";
         private readonly ILogger<HotelService> _logger;
-        public HotelService(AppSettings appSettings, ILogger<HotelService> logger)
+        public HotelService(AppSettings appSettings, ILogger<HotelService> logger = null)
         {
             _fileName = appSettings.ConfigurationFileName;
             _logger = logger;
@@ -30,11 +30,11 @@ namespace HotelAPI.HotelAPI.Core.Service
             }
             catch (ApiUrlException aue)
             {
-                _logger.LogError(aue.ToString());
+                _logger?.LogError(aue.ToString());
             }
             catch (FileNotFoundException fne)
             {
-                _logger.LogError(fne.ToString());
+                _logger?.LogError(fne.ToString());
             }
             return client;
         }

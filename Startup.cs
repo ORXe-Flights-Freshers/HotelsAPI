@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
+using Serilog.Events;
 using Serilog.Exceptions;
 using Serilog.Sinks.Elasticsearch;
 
@@ -23,7 +24,7 @@ namespace HotelAPI
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup(IHostingEnvironment env, IConfiguration configuration)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
@@ -32,17 +33,24 @@ namespace HotelAPI
                 .AddEnvironmentVariables();
 
             Configuration = builder.Build();
-            //var elasticUri = Configuration["ElasticConfiguration:Uri"];
-            Log.Logger = new LoggerConfiguration()
+            var elasticUri = Configuration["ElasticConfiguration:Uri"];
+             Log.Logger = new LoggerConfiguration()
                 .Enrich.FromLogContext()
+                .Enrich.WithExceptionDetails()
+                .Enrich.WithMachineName()
                 .ReadFrom.Configuration(Configuration)
+                .WriteTo.Elasticsearch(new ElasticsearchSinkOptions(new Uri(elasticUri))
+                 {
+                     MinimumLogEventLevel = LogEventLevel.Verbose,
+                     AutoRegisterTemplate = true
+                 })
                 .CreateLogger();  
         }
 
         public IConfigurationRoot Configuration { get; }
         public void ConfigureServices(IServiceCollection services)
         {
-            
+            services.AddLogging(logger => logger.AddSerilog(dispose: true));
             services.AddDistributedRedisCache(options =>
             {
                 options.Configuration = Configuration.GetConnectionString("Redis");
@@ -62,7 +70,7 @@ namespace HotelAPI
                     {
                         builder
                         .AllowAnyOrigin()
-                        .AllowAnyMethod()
+                        .WithMethods("GET", "OPTIONS")
                         .AllowAnyHeader()
                         .AllowCredentials();
                     });
@@ -73,7 +81,6 @@ namespace HotelAPI
         public void Configure(IApplicationBuilder app, IHostingEnvironment env,
                               ILoggerFactory loggerFactory)
         {
-
             loggerFactory.AddSerilog();
             app.UseHsts();
             app.UseMiddleware<SerilogMiddleware>();
