@@ -1,13 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using HotelAPI.Core.Service;
+using HotelAPI.HotelAPI.Core.Exceptions;
 
 namespace HotelAPI
 {
@@ -15,7 +10,15 @@ namespace HotelAPI
     {
         public static void Main(string[] args)
         {
-            FirebaseService.Authenticate();
+            try
+            {
+                FirebaseService.Authenticate();
+            }
+            catch (InvalidHostException)
+            {
+                Console.WriteLine("Exception");
+                return;
+            }
             CreateWebHostBuilder(args).Build().Run();
         }
 
